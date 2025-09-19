@@ -1,0 +1,1 @@
+Eu desenvolvi o famoso jogo da cobrinha pra tentar entender melhor como funciona a colisão e movimentação dentro do código. Apesar de ter sido desafiador, não vou mentir, fiquei muito feliz por funcionar!
