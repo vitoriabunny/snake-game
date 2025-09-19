@@ -1,61 +1,120 @@
-const galaxyBackground = document.querySelector('.galaxy-background');
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const startButton = document.getElementById('startButton');
 
-document.addEventListener('mousemove', (e) => {
-    const mouseX = e.clientX;
-    const mouseY = e.clientY;
+const gridSize = 20;
+let snake = [{ x: 10, y: 10 }];
+let food = {};
+let dx = 0;
+let dy = 0;
+let score = 0;
+let gameOver = true;
+let gameInterval;
 
-   
-    const normalizedX = mouseX / window.innerWidth;
-    const normalizedY = mouseY / window.innerHeight;
+function generateFood() {
+    food = {
+        x: Math.floor(Math.random() * (canvas.width / gridSize)),
+        y: Math.floor(Math.random() * (canvas.height / gridSize))
+    };
+}
 
-  
-    const hue1 = (normalizedX * 360 + normalizedY * 180) % 360; 
-    const hue2 = ((normalizedX * 360 * 0.5) + (normalizedY * 360 * 1.5) + 90) % 360; 
-    const hue3 = ((normalizedX * 360 * 1.2) + (normalizedY * 360 * 0.8) + 180) % 360; 
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    const saturation = 90 + (normalizedX * 10); 
-    const lightness = 60 + (normalizedY * 10);
+    ctx.fillStyle = '#0f0';
+    snake.forEach(segment => {
+        ctx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize, gridSize);
+    });
 
-    const color1 = `hsl(${hue1}, ${saturation}%, ${lightness}%, 0.7)`; 
-    const color2 = `hsl(${hue2}, ${saturation}%, ${lightness * 0.8}%, 0.5)`; 
-    const color3 = `hsl(${hue3}, ${saturation * 0.7}%, ${lightness * 0.6}%, 0.3)`; 
+    ctx.fillStyle = '#f00';
+    ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize, gridSize);
+}
 
-    const starDensity = 0.005; 
-    let stars = '';
-    for (let i = 0; i < 100; i++) { 
-        const starX = Math.random() * window.innerWidth;
-        const starY = Math.random() * window.innerHeight;
-        const starSize = Math.random() * 2 + 0.5; 
-        const starBrightness = Math.random() * 0.8 + 0.2; 
-        stars += `radial-gradient(circle at ${starX}px ${starY}px, rgba(255, 255, 255, ${starBrightness}) 0%, rgba(255, 255, 255, 0) ${starSize}px),`;
+function update() {
+    if (gameOver) return;
+
+    const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+
+    if (head.x < 0 || head.x >= canvas.width / gridSize ||
+        head.y < 0 || head.y >= canvas.height / gridSize) {
+        endGame();
+        return;
     }
 
-  
-    const mainGradient = `
-        radial-gradient(circle at ${mouseX}px ${mouseY}px,
-            ${color1} 0%,
-            transparent 15%),
-        radial-gradient(circle at ${mouseX * 0.9 + 50}px ${mouseY * 1.1 - 30}px, 
-            ${color2} 0%,
-            transparent 25%),
-        radial-gradient(circle at ${mouseX * 1.1 - 70}px ${mouseY * 0.9 + 40}px,
-            ${color3} 0%,
-            transparent 35%)
-    `;
+    for (let i = 1; i < snake.length; i++) {
+        if (head.x === snake[i].x && head.y === snake[i].y) {
+            endGame();
+            return;
+        }
+    }
 
+    snake.unshift(head);
 
-    galaxyBackground.style.background = `
-        ${stars}
-        ${mainGradient},
-        radial-gradient(circle at 50% 50%, #1a0033 0%, #000000 70%) 
-    `;
-});
+    if (head.x === food.x && head.y === food.y) {
+        score++;
+        generateFood();
+    } else {
+        snake.pop();
+    }
 
-document.addEventListener('DOMContentLoaded', () => {
+    draw();
+}
 
-    const initialEvent = new MouseEvent('mousemove', {
-        clientX: window.innerWidth / 2,
-        clientY: window.innerHeight / 2
-    });
-    document.dispatchEvent(initialEvent);
-});
+function changeDirection(event) {
+    const keyPressed = event.keyCode;
+    const LEFT_KEY = 37;
+    const UP_KEY = 38;
+    const RIGHT_KEY = 39;
+    const DOWN_KEY = 40;
+
+    const goingUp = dy === -1;
+    const goingDown = dy === 1;
+    const goingLeft = dx === -1;
+    const goingRight = dx === 1;
+
+    if (keyPressed === LEFT_KEY && !goingRight) {
+        dx = -1;
+        dy = 0;
+    }
+    if (keyPressed === UP_KEY && !goingDown) {
+        dx = 0;
+        dy = -1;
+    }
+    if (keyPressed === RIGHT_KEY && !goingLeft) {
+        dx = 1;
+        dy = 0;
+    }
+    if (keyPressed === DOWN_KEY && !goingUp) {
+        dx = 0;
+        dy = 1;
+    }
+}
+
+function startGame() {
+    gameOver = false;
+    snake = [{ x: 10, y: 10 }];
+    dx = 0;
+    dy = 0;
+    score = 0;
+    generateFood();
+    if (gameInterval) clearInterval(gameInterval);
+
+    draw();
+
+    setTimeout(() => {
+        dx = 1;
+        gameInterval = setInterval(update, 100);
+    }, 1000);
+}
+
+function endGame() {
+    gameOver = true;
+    clearInterval(gameInterval);
+    alert(`Game Over! Sua pontuação: ${score}`);
+}
+
+document.addEventListener('keydown', changeDirection);
+startButton.addEventListener('click', startGame);
+
+generateFood();
+draw();
