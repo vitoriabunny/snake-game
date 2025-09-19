@@ -1,0 +1,16 @@
+body {
+    margin: 0;
+    overflow: hidden;
+    background-color: #000;
+    cursor: none;
+}
+
+.galaxy-background {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    background-size: cover; 
+    background-position: center center;
+    background-repeat: no-repeat;
+    transition: background-image 0.1s ease-out;
+}
